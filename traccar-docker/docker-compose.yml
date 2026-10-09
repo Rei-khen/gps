@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: traccar_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: traccar
+      MYSQL_USER: traccar
+      MYSQL_PASSWORD: traccar_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  traccar:
+    image: traccar/traccar:latest
+    container_name: traccar_app
+    restart: always
+    ports:
+      - "8082:8082"     # Port Web Dashboard
+      - "5023:5023/tcp" # Port GPS Protocol GT06
+      - "5023:5023/udp"
+    volumes:
+      - ./traccar.xml:/opt/traccar/conf/traccar.xml:ro
+      - traccar_logs:/opt/traccar/logs
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
+  traccar_logs:
